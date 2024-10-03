@@ -14,7 +14,7 @@ const DIRECTORY_URL = 'https://book.zongheng.com/showchapter/{bookId}.html';
 const COVER_BASE_URL = 'http://static.zongheng.com/upload/';
 
 // 定义返回类型
-export interface ChapterContent {
+export interface ChapterRes {
   name: string;
   title: string;
   content: string;
@@ -23,6 +23,24 @@ export interface ChapterContent {
   author?: string;
   words?: string;
   updateTime?: string;
+}
+
+export interface DirectoryRes {
+  chapterList: Array<{
+    name: string;
+    url: string;
+  }>;
+  volumeList: Array<{
+    volume: {
+      name: string;
+      chapterCount: string;
+      totalWords: string;
+    };
+    chapters: {
+      name: string;
+      url: string;
+    }[];
+  }>;
 }
 
 const getHeaders = () => ({
@@ -88,14 +106,14 @@ export class NovelService {
    * @param bookId - 小说ID
    * @returns 章节列表
    */
-  getDirectory = async (bookId: number): Promise<unknown> => {
+  getDirectory = async (bookId: number): Promise<DirectoryRes> => {
     const url = DIRECTORY_URL.replace('{bookId}', bookId.toString());
     try {
       const response = await axios.get(url, { headers: getHeaders() });
       const $ = load(response.data);
       const ulElement = $('body div.volume-list ul.chapter-list');
       const liElements = ulElement.find('li');
-      const chapterList = liElements
+      const chapterList: DirectoryRes['chapterList'] = liElements
         ?.map((_, element) => ({
           name: $(element).find('a').text(),
           url: $(element).find('a').attr('href'),
@@ -103,12 +121,15 @@ export class NovelService {
         .get();
 
       const volumeElement = $('div.volume-list');
-      const volumeList = [];
+      const volumeList: DirectoryRes['volumeList'] = [];
 
       volumeElement.find('> div').map((index, element) => {
         // 提取分卷信息
         const volumeElement = $(element).find('.volume');
-        const name = volumeElement.find('em').first().text().trim();
+        // 获取所有的子节点，包括文本节点
+        const fullText = volumeElement.text().trim(); // 获取全部文本内容
+        // 按换行符分割，获取第二行
+        const name = fullText.split('\n')?.[1]?.split('共')?.[0].trim() || '';
         const chapterCount = volumeElement
           ?.find('.count')
           ?.text()
@@ -132,8 +153,14 @@ export class NovelService {
       return { chapterList, volumeList };
     } catch (error) {
       console.error('Error getting directory:', error);
-      return [];
+      return { chapterList: [], volumeList: [] };
     }
+  };
+
+  labelMap = {
+    作者: 'author',
+    更新时间: 'updateTime',
+    本章字数: 'wordCount',
   };
 
   /**
@@ -141,7 +168,7 @@ export class NovelService {
    * @param url - 章节URL
    * @returns 章节标题、内容、更新时间、作者、本章字数、更新时间、书名和类别
    */
-  getChapterContent = async (url: string): Promise<ChapterContent> => {
+  getChapterContent = async (url: string): Promise<ChapterRes> => {
     try {
       const response = await axios.get(url, { headers: getHeaders() });
       const $ = load(response.data);
@@ -165,7 +192,8 @@ export class NovelService {
       const bookInfoObj = bookInfo.reduce(
         (acc, curr) => {
           const [label, value] = curr.label.split(':');
-          acc[label.trim()] = value.trim();
+          const englishLabel = this.labelMap[label.trim()] || label.trim(); // 使用映射对象转换键名，如果没有映射则使用原键名
+          acc[englishLabel] = value.trim();
           return acc;
         },
         {} as Record<string, string>,
