@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Post, Body } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { NovelService } from './novel.service';
 
 @Controller('novel')
@@ -34,8 +34,12 @@ export class NovelController {
    * 获取章节内容接口
    * @param url - 章节URL
    */
-  @Post('chapter') // 修改为 POST 请求
-  async getChapterContent(@Body('url') url: string) {
+  @Get('chapter') // 修改为 POST 请求
+  async getChapterContent(
+    @Query('id') id: string,
+    @Query('id') chapterId: string,
+  ) {
+    const url = `https://read.zongheng.com/chapter/${id}/${chapterId}.html`;
     const data = await this.novelService.getChapterContent(url);
     return { code: 1, data }; // 封装返回格式
   }
