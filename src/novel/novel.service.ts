@@ -5,6 +5,7 @@ import { load } from 'cheerio';
 
 // 纵横中文网官网地址
 const BASE_URL = 'https://book.zongheng.com';
+const BASE_URL1 = 'https://read.zongheng.com';
 // 搜索的地址
 const SEARCH_URL =
   'https://search.zongheng.com/search/book?keyword={keyword}&sort=null&pageNo={pageNo}&pageNum={pageNum}&isFromHuayu=0';
@@ -21,11 +22,21 @@ export interface ChapterRes {
   category: string;
   path: string[];
   author?: string;
-  words?: string;
+  wordCount?: string;
   updateTime?: string;
+  preUrl?: string;
+  nextUrl?: string;
 }
 
 export interface DirectoryRes {
+  info: {
+    title: string;
+    author: string;
+    latestChapter: string;
+    latestChapterUrl: string;
+    updateTime: string;
+    path: string[];
+  };
   chapterList: Array<{
     name: string;
     url: string;
@@ -150,10 +161,39 @@ export class NovelService {
         volumeList.push({ volume, chapters });
       });
 
-      return { chapterList, volumeList };
+      const metaElement = $('body div.book-meta');
+      const info = {
+        title: '',
+        author: '',
+        latestChapter: '',
+        latestChapterUrl: '',
+        updateTime: '',
+        path: [],
+      };
+      info.title = $(metaElement).find('h1').text().trim();
+      info.author = $(metaElement).find('a').text().trim();
+      info.updateTime = $(metaElement).find('span').eq(1).text().trim();
+      info.latestChapter = $(metaElement).find('span').eq(2).text().trim();
+      info.latestChapterUrl = chapterList[chapterList.length - 1].url;
+      info.path = $('div.crumb > a')
+        .map((_, element) => $(element).text().trim().replace(/>/g, ''))
+        .get();
+
+      return { chapterList, volumeList, info };
     } catch (error) {
       console.error('Error getting directory:', error);
-      return { chapterList: [], volumeList: [] };
+      return {
+        chapterList: [],
+        volumeList: [],
+        info: {
+          title: '',
+          author: '',
+          latestChapter: '',
+          latestChapterUrl: '',
+          updateTime: '',
+          path: [],
+        },
+      };
     }
   };
 
@@ -205,12 +245,22 @@ export class NovelService {
       const name = $('.reader-crumb').contents().last().text().trim();
       const category = $('.reader-crumb a').eq(2).text().trim();
 
+      const btns = $('div.nav-btn-group');
+      // 去除尾部的？
+      const preUrl =
+        BASE_URL1 + (btns.find('a').attr('href') || '').replace(/\?$/, '');
+      const nextUrl =
+        BASE_URL1 +
+        (btns.find('a').eq(2).attr('href') || '').replace(/\?$/, '');
+
       return {
         name,
         title,
         path,
         category,
         ...bookInfoObj,
+        preUrl,
+        nextUrl,
         content,
       };
     } catch (error) {
@@ -221,7 +271,7 @@ export class NovelService {
         path: [],
         category: '',
         author: '',
-        words: '',
+        wordCount: '',
         updateTime: '',
         content: '',
       };
