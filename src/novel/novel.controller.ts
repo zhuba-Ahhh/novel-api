@@ -37,7 +37,7 @@ export class NovelController {
   @Get('chapter') // 修改为 POST 请求
   async getChapterContent(
     @Query('id') id: string,
-    @Query('id') chapterId: string,
+    @Query('chapterId') chapterId: string,
   ) {
     const url = `https://read.zongheng.com/chapter/${id}/${chapterId}.html`;
     const data = await this.novelService.getChapterContent(url);
