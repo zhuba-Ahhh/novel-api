@@ -247,11 +247,22 @@ export class NovelService {
 
       const btns = $('div.nav-btn-group');
       // 去除尾部的？
-      const preUrl =
-        BASE_URL1 + (btns.find('a').attr('href') || '').replace(/\?$/, '');
-      const nextUrl =
-        BASE_URL1 +
-        (btns.find('a').eq(2).attr('href') || '').replace(/\?$/, '');
+      let preUrl = (btns.find('a').attr('href') || '').replace(/\?$/, '');
+      if (!isScript(preUrl)) {
+        preUrl = BASE_URL1 + preUrl;
+      } else {
+        preUrl = '';
+      }
+
+      let nextUrl = (btns.find('a').eq(2).attr('href') || '').replace(
+        /\?$/,
+        '',
+      );
+      if (!isScript(nextUrl)) {
+        nextUrl = BASE_URL1 + nextUrl;
+      } else {
+        nextUrl = '';
+      }
 
       return {
         name,
@@ -278,3 +289,5 @@ export class NovelService {
     }
   };
 }
+
+const isScript = (str: string) => str == 'javascript:;';
