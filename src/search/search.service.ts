@@ -8,6 +8,91 @@ export type ResSearchSuggest = {
   books?: Array<string>;
 };
 
+export interface SearchBookData {
+  datas?: Datas;
+  encodeKw?: string;
+  isFromHuayu?: number;
+  keyword?: string;
+  pageNo?: number;
+  recDataList?: RecDataList[];
+  sort?: string;
+  [property: string]: any;
+}
+
+export interface Datas {
+  aroundNum: number;
+  list: List[];
+  pageNo: number;
+  pageSize: number;
+  scrollPageNums: number[];
+  total: number;
+  totalPage: number;
+  [property: string]: any;
+}
+
+export interface List {
+  authorId: number;
+  authorization: number;
+  authorName: string;
+  bookId: number;
+  cateFineId: number;
+  cateFineName: string;
+  cateId: number;
+  catePid: number;
+  catePName: string;
+  chapterId: number;
+  chapterName: string;
+  consumeType: number;
+  coverUrl: string;
+  cpId: number;
+  cpName: string;
+  description: string;
+  keyword: string;
+  level: number;
+  name: string;
+  serialStatus: number;
+  tomeId: number;
+  tomeName: string;
+  totalWord: number;
+  updateTime: string;
+  [property: string]: any;
+}
+
+export interface RecDataList {
+  authorId: number;
+  authorName: string;
+  beginTime: string;
+  bookId: number;
+  bookName: string;
+  cateFineId: number;
+  cateFineName: string;
+  cateId: number;
+  cateName: string;
+  catePid: number;
+  catePname: string;
+  createTime: string;
+  description: string;
+  endTime: string;
+  extraInfo: string;
+  extraInfoJsonMap: null;
+  id: number;
+  imageUrl: string;
+  issueTime: string;
+  level: number;
+  linkUrl: string;
+  position: number;
+  recReason: string;
+  serialStatus: number;
+  summary: string;
+  title: string;
+  titleColor: string;
+  totalWord: number;
+  typeId: number;
+  uniqCharId: string;
+  updateTime: string;
+  [property: string]: any;
+}
+
 @Injectable()
 export class SearchService {
   /**
@@ -21,7 +106,7 @@ export class SearchService {
     keyword: string,
     pageNo: number = 1,
     pageNum: number = 20,
-  ): Promise<unknown> => {
+  ): Promise<SearchBookData> => {
     const url = SEARCH_URL.replace('{keyword}', encodeURIComponent(keyword))
       .replace('{pageNo}', pageNo.toString())
       .replace('{pageNum}', pageNum.toString());
@@ -31,7 +116,7 @@ export class SearchService {
       return response?.data?.data || {};
     } catch (error) {
       console.error('Error searching books:', error);
-      return [];
+      return {};
     }
   };
   /**
