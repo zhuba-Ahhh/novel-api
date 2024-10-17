@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import axios from 'axios';
-import { SEARCH_URL, getHeaders, COVER_BASE_URL } from '../const';
+import { SEARCH_URL, getHeaders } from '../const';
 
 export type ResSearchSuggest = {
   authors?: Array<string>;
@@ -27,16 +27,8 @@ export class SearchService {
       .replace('{pageNum}', pageNum.toString());
     try {
       const response = await axios.get(url, { headers: getHeaders() });
-      const books = response?.data?.data?.datas?.list || [];
-      return books.map((book) => ({
-        ...book,
-        id: book.bookId,
-        name: book.name,
-        author: book.authorName,
-        cover: COVER_BASE_URL + book.coverUrl,
-        description: book.description,
-        words: book.totalWord,
-      }));
+
+      return response?.data?.data || {};
     } catch (error) {
       console.error('Error searching books:', error);
       return [];
@@ -53,7 +45,6 @@ export class SearchService {
       const response: any = await axios.get(url, {
         headers: getHeaders(),
       });
-
       return response?.data?.data || {};
     } catch (error) {
       console.error('Error searching books:', error);
